@@ -86,7 +86,7 @@ Together, these two parts cover every scenario where the file can be overwritten
 sudo dnf install git -y
 git clone https://github.com/SysGuides/sysguides-grub-cryptomount-fix.git
 cd sysguides-grub-cryptomount-fix
-chmod +x install.sh
+chmod +x install.sh uninstall.sh
 sudo ./install.sh
 ```
 
