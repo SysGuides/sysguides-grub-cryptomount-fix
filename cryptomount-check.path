@@ -1,0 +1,8 @@
+[Unit]
+Description=Watch /boot/efi/EFI/fedora/ for grub.cfg changes
+
+[Path]
+PathChanged=/boot/efi/EFI/fedora/
+
+[Install]
+WantedBy=multi-user.target
