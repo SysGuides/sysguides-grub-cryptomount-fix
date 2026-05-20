@@ -1,0 +1,92 @@
+#!/bin/bash
+# /etc/grub.d/99_cryptomount_check
+#
+# Purpose: Ensures 'cryptomount -u <uuid>' is always the first line of
+#          /boot/efi/EFI/fedora/grub.cfg after grub2-mkconfig runs.
+#
+# Background: On systems where /boot lives inside a LUKS-encrypted root
+#             (no separate /boot partition), GRUB requires this line before
+#             it can read grub.cfg. Fedora updates can overwrite this file
+#             and remove the line, causing GRUB to drop to a rescue prompt.
+#
+# Usage: Runs automatically via grub2-mkconfig. Can also be run manually:
+#        sudo bash /etc/grub.d/99_cryptomount_check
+#
+# IMPORTANT: All output is redirected to stderr.
+#            grub2-mkconfig captures stdout from scripts in /etc/grub.d/
+#            and writes it into the generated grub.cfg. Keeping stdout
+#            clean prevents corruption of /boot/grub2/grub.cfg.
+
+# Project: sysguides-grub-cryptomount-fix
+# Author: Madhu Desai (SysGuides)
+# Website: https://sysguides.com
+# GitHub: https://github.com/SysGuides/sysguides-grub-cryptomount-fix.git
+
+# --- Redirect stdout to stderr (grub2-mkconfig safety) ---
+
+exec 1>&2
+
+GRUB_CFG="/boot/efi/EFI/fedora/grub.cfg"
+SCRIPT_NAME="99_cryptomount_check"
+
+echo "[${SCRIPT_NAME}] Starting cryptomount check..."
+
+# --- Step 1: Get the block device backing / ---
+ROOT_DEVICE="$(grub2-probe --target=device / 2>/dev/null)"
+if [ -z "$ROOT_DEVICE" ]; then
+    echo "[${SCRIPT_NAME}] ERROR: grub2-probe could not determine root device. Skipping."
+    exit 1
+fi
+echo "[${SCRIPT_NAME}] Root device: ${ROOT_DEVICE}"
+
+# --- Step 2: Get the LUKS device from cryptsetup status ---
+LUKS_DEVICE="$(cryptsetup status "$ROOT_DEVICE" 2>/dev/null | grep 'device:' | awk '{print $2}')"
+if [ -z "$LUKS_DEVICE" ]; then
+    echo "[${SCRIPT_NAME}] ERROR: Could not resolve LUKS device from cryptsetup status. Skipping."
+    exit 1
+fi
+echo "[${SCRIPT_NAME}] LUKS device: ${LUKS_DEVICE}"
+
+# --- Step 3: Get LUKS UUID and strip dashes (GRUB requires no-dash format) ---
+LUKS_UUID="$(cryptsetup luksUUID "$LUKS_DEVICE" 2>/dev/null)"
+if [ -z "$LUKS_UUID" ]; then
+    echo "[${SCRIPT_NAME}] ERROR: Could not retrieve LUKS UUID. Skipping."
+    exit 1
+fi
+
+LUKS_UUID_NO_DASH="${LUKS_UUID//-/}"
+EXPECTED_LINE="cryptomount -u ${LUKS_UUID_NO_DASH}"
+echo "[${SCRIPT_NAME}] Expected first line: '${EXPECTED_LINE}'"
+
+# --- Step 4: Verify grub.cfg exists ---
+if [ ! -f "$GRUB_CFG" ]; then
+    echo "[${SCRIPT_NAME}] WARNING: ${GRUB_CFG} not found. Skipping."
+    exit 1
+fi
+
+# --- Step 5: Check if first line already matches exactly ---
+FIRST_LINE="$(head -n 1 "$GRUB_CFG")"
+
+if [ "$FIRST_LINE" = "$EXPECTED_LINE" ]; then
+    echo "[${SCRIPT_NAME}] Line already present and correct. Nothing to do."
+    exit 0
+fi
+
+echo "[${SCRIPT_NAME}] Line missing or incorrect. Current first line: '${FIRST_LINE}'"
+echo "[${SCRIPT_NAME}] Fixing ${GRUB_CFG}..."
+
+# --- Step 6: Remove any stale/duplicate cryptomount -u lines, then prepend correct line ---
+# Uses a temp file + atomic mv to avoid corrupting grub.cfg on failure
+TMPFILE="$(mktemp)" || { echo "[${SCRIPT_NAME}] ERROR: Could not create temp file. Aborting."; exit 1; }
+
+# Strip all existing cryptomount -u lines (handles stale UUID or duplicates)
+grep -v '^cryptomount -u ' "$GRUB_CFG" > "$TMPFILE" || true
+
+# Prepend the correct line
+{ echo "$EXPECTED_LINE"; cat "$TMPFILE"; } > "${GRUB_CFG}.new"
+
+# Atomic replace
+mv "${GRUB_CFG}.new" "$GRUB_CFG"
+rm -f "$TMPFILE"
+
+echo "[${SCRIPT_NAME}] Done. Successfully added: '${EXPECTED_LINE}'"
