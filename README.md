@@ -78,12 +78,12 @@ sudo wget -O /etc/grub.d/99_cryptomount_check \
 `grub2-mkconfig` will only run scripts in `/etc/grub.d/` that are executable.
 
 ```bash
-sudo chmod 755 /etc/grub.d/99_cryptomount_check
+sudo chmod +x /etc/grub.d/99_cryptomount_check
 ```
 
 ### 3. Test it manually
 
-The script is safe to run at any time. It is idempotent — running it multiple times has no unintended side effects.
+The script is safe to run at any time. Running it multiple times will not cause problems or unintended changes.
 
 ```bash
 sudo bash /etc/grub.d/99_cryptomount_check
