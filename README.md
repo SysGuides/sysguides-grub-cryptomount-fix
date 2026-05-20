@@ -92,7 +92,7 @@ sudo bash /etc/grub.d/99_cryptomount_check
 ### 4. Verify the result
 
 ```bash
-sudo head -n 3 /boot/efi/EFI/fedora/grub.cfg
+sudo cat /boot/efi/EFI/fedora/grub.cfg
 ```
 
 The first line should look like this:
