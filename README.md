@@ -80,16 +80,12 @@ Together, these two parts cover every scenario where the file can be overwritten
 
 ## Installation
 
-### 1. Clone the repository
+### 1. Clone and install
 
 ```bash
+sudo dnf install git -y
 git clone https://github.com/SysGuides/sysguides-grub-cryptomount-fix.git
 cd sysguides-grub-cryptomount-fix
-```
-
-### 2. Run the installer
-
-```bash
 sudo ./install.sh
 ```
 
@@ -101,10 +97,10 @@ The installer will:
 - Run the check script immediately to restore the `cryptomount` line if it is missing
 - Print the first line of `/boot/efi/EFI/fedora/grub.cfg` so you can verify the result
 
-### 3. Verify the result
+### 2. Verify the result
 
 ```bash
-head -n 1 /boot/efi/EFI/fedora/grub.cfg
+sudo cat /boot/efi/EFI/fedora/grub.cfg
 ```
 
 Expected output:
@@ -115,10 +111,10 @@ cryptomount -u 563b9fdabd6a4c1497a37317d34818ea
 
 (with your actual UUID, no dashes)
 
-### 4. Confirm the path unit is active
+### 3. Confirm the path unit is active
 
 ```bash
-systemctl status cryptomount-check.path
+sudo systemctl status cryptomount-check.path
 ```
 
 ---
@@ -132,13 +128,15 @@ To confirm the fix works end-to-end:
 sudo sed -i '1{/^cryptomount/d;}' /boot/efi/EFI/fedora/grub.cfg
 
 # Step 2 — Confirm it is gone
-head -n 1 /boot/efi/EFI/fedora/grub.cfg
+# In most cases, the cryptomount line is restored almost immediately,
+# so this command may not show any visible change.
+sudo cat /boot/efi/EFI/fedora/grub.cfg
 
 # Step 3 — Wait a few seconds
 sleep 3
 
 # Step 4 — Confirm it is restored automatically
-head -n 1 /boot/efi/EFI/fedora/grub.cfg
+sudo cat /boot/efi/EFI/fedora/grub.cfg
 ```
 
 The `cryptomount` line should reappear on its own within a few seconds.
