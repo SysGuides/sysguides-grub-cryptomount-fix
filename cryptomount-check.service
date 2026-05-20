@@ -1,0 +1,7 @@
+[Unit]
+Description=Restore cryptomount line in /boot/efi/EFI/fedora/grub.cfg
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /etc/grub.d/99_cryptomount_check
