@@ -11,7 +11,7 @@ is always present as the **first line** of `/boot/efi/EFI/fedora/grub.cfg` after
 > **This script is a companion to a specific tutorial.** It is designed for the exact Fedora 44 full disk encryption setup described in the article and video below. If your setup is different, this script may not apply.
 >
 > - 📄 **Article:** [Fedora 44 Full Disk Encryption Setup](https://sysguides.com/)
-> - 🎬 **YouTube Video:** [Watch on YouTube](https://youtube.com/)
+> - 🎬 **YouTube Video:** [Watch on YouTube](https://youtu.be/DcUdzYk_Q-Y/)
 
 ---
 
@@ -170,7 +170,7 @@ This stops and removes the systemd units and the check script. The `cryptomount`
 ## Related Content
 
 - **Article:** Fedora 44 Full Disk Encryption Setup — https://sysguides.com/
-- **YouTube Video:** https://youtube.com/
+- **YouTube Video:** https://youtu.be/DcUdzYk_Q-Y/
 
 ---
 
